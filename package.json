@@ -14,7 +14,8 @@
   },
   "scripts": {
     "start": "node src/launcher.js",
-    "mint": "node src/cli.js"
+    "mint": "node src/cli.js",
+    "9router": "node src/connect-9router.js"
   },
   "keywords": [
     "api-key",
@@ -22,14 +23,10 @@
     "register",
     "launcher",
     "enlyai",
-    "apikey",
-    "9router",
-    "openai-compatible"
+    "apikey"
   ],
   "files": [
-    "src/cli.js",
-    "src/launcher.js",
-    "src/connect-9router.js",
+    "src",
     "README.md",
     "LICENSE"
   ]

@@ -18,8 +18,9 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-8%20served-412991?style=for-the-badge)](https://api.enlyai.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Quick start](#-quick-start) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🤖 Models & free tier](#-models--free-tier) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🔌 9Router](#-connect-to-9router) · [🐞 Issues](#-issues)
+[🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-8-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
 
 </div>
 
@@ -29,7 +30,24 @@
 
 EnlyAI hands out a **500,000,000,000-unit welcome quota per account** and mints the first API key over plain REST — **no e-mail, no captcha, no card, no browser**. That makes one account per key the natural unit, and this tool turns that into a `keys.txt` where every line survived a live chat call.
 
-## 🤖 Models & free tier
+## 🎁 Free tier — how much you get
+
+**Every new account gets a 500,000,000,000-unit welcome quota** — no e-mail, no captcha, no card, no browser.
+
+| What | Value |
+| --- | --- |
+| Welcome quota | **500,000,000,000 units** (`quota` on `GET /api/user/self` right after sign-up) |
+| Card required | **No** |
+| Sign-up | plain REST — username + password (the e-mail field is free-form; no code is ever sent) |
+| The unit that scales | **one account = one key** → `--count N` is really "N free accounts" |
+
+> 💡 The free tier is set by EnlyAI and can change. Check the live numbers at [api.enlyai.com](https://api.enlyai.com) — and let the tool's own gate decide:
+
+```bash
+node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
+```
+
+## 🤖 Models — all 8 of them
 
 `GET /v1/models` (with a key) serves 8 ids; the live-verified ones:
 
@@ -40,6 +58,19 @@ EnlyAI hands out a **500,000,000,000-unit welcome quota per account** and mints 
 | `meta/muse-glimmer-30b` | intermittent under load — re-checked by `--verify-only` |
 
 **How much is free:** the welcome quota measured on a fresh account: `GET /api/user/self` answers `quota: 500000000000` right after sign-up (units are the panel's own quota scale). The grant is per account, so `--count N` multiplies it. `minimaxai/minimax-m3` was retired upstream (410 Gone) — the tool never lists it.
+
+## 🧪 How to use the API
+
+The base URL is **`https://api.enlyai.com/v1`** — OpenAI-compatible, so anything that speaks OpenAI works.
+
+```bash
+curl https://api.enlyai.com/v1/chat/completions \
+  -H "Authorization: Bearer <your key>" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning","messages":[{"role":"user","content":"hi"}],"max_tokens":8}'
+```
+
+Set the base URL in any agent or SDK (Cursor, OpenCode, Kilo Code, …) and pick any model id above.
 
 ## 🛠 Quick start
 
@@ -79,6 +110,15 @@ node src/cli.js --verify-only
 ```
 
 ## 🧭 How it works
+
+```
+inbox (one address per account)                                  a fresh address per account
+   │
+   ├─▶ sign-up: EnlyAI page → e-mail address → code / link from the inbox
+   ├─▶ session: the account's cookies or access token in hand
+   ├─▶ key mint: the account's key endpoint → plaintext key returned once (written to disk immediately)
+   └─▶ live proof: POST https://api.enlyai.com/v1/chat/completions → real content = the key is live
+```
 
 | Step | Call | Notes |
 | --- | --- | --- |
@@ -123,6 +163,16 @@ node src/connect-9router.js
 ```
 
 Defaults: `--base http://localhost:20128`, `--password 123456`, `--name "EnlyAI"`, `--prefix enlyai`, `--base-url https://api.enlyai.com/v1`. Models are then served as `enlyai/<model id>` and load-balanced across every key.
+
+## 🔑 What one key gets you
+
+| | |
+| --- | --- |
+| 🏢 Provider | **EnlyAI** — [api.enlyai.com](https://api.enlyai.com) |
+| 🎁 What the provider gives | one account per key — email-free, every key chat-verified |
+| 🔑 What one key gets you | one API key scoped to its own account: the 8 model ids on the endpoint below, at your plan's limits. The quota lives on the **account**, which is exactly why this tool creates one account per key |
+| 🌐 API shape | OpenAI-compatible: `POST https://api.enlyai.com/v1/chat/completions` |
+| 🔒 Your data | only api.enlyai.com and the inbox backend you configure are contacted; keys stay on your machine |
 
 ## 🐞 Issues
 

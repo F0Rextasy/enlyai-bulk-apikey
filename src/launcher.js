@@ -141,6 +141,11 @@ async function connectFlow(cfg) {
 
 async function main() {
   const cfg = loadConfig();
+  if (process.argv.includes('--connect-9router')) {
+    await connectFlow(cfg);
+    rl.close();
+    return;
+  }
   banner();
   console.log('  1) Mint keys      — create one account per key and verify each with a live chat call');
   console.log('  2) Verify keys    — re-check every key in keys.txt with a live chat call');
