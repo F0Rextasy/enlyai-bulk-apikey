@@ -28,6 +28,7 @@ const defaults = {
   model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
   routerBase: 'http://localhost:20128',
   routerPassword: '123456',
+  preset: process.env.ENLYAI_PRESET || '', // '' = one account at a time (historical shape)
 };
 
 function loadConfig() {
@@ -101,6 +102,7 @@ async function mintFlow(cfg) {
   cfg.count = parseInt(await ask('How many accounts/keys do you want (any number)', cfg.count), 10) || cfg.count;
   cfg.proxyFile = await ask('Proxy list file (one proxy per line)', cfg.proxyFile);
   cfg.model = await ask('Model used for the live verification', cfg.model);
+  cfg.preset = await ask('Run preset (turbo = 5 workers, balanced = 4, safe = 2, empty = one at a time)', cfg.preset);
   saveConfig(cfg);
 
   if (!fs.existsSync(path.resolve(ROOT, cfg.proxyFile)) && !fs.existsSync(cfg.proxyFile)) {
@@ -108,7 +110,7 @@ async function mintFlow(cfg) {
     console.log('    (http://host:port, socks5://host:port or host:port)');
     return;
   }
-  run(['--count', String(cfg.count), '--model', cfg.model], { ENLYAI_PROXIES: cfg.proxyFile });
+  run(['--count', String(cfg.count), '--model', cfg.model, ...(cfg.preset ? [`--preset=${cfg.preset}`] : [])], { ENLYAI_PROXIES: cfg.proxyFile });
 }
 
 async function verifyFlow(cfg) {
@@ -141,6 +143,9 @@ async function connectFlow(cfg) {
 
 async function main() {
   const cfg = loadConfig();
+  // Non-interactive preset pass-through: `node src/launcher.js --preset=turbo`.
+  const presetFlag = process.argv.find((a) => a.startsWith('--preset='));
+  if (presetFlag) cfg.preset = presetFlag.split('=').slice(1).join('=');
   if (process.argv.includes('--connect-9router')) {
     await connectFlow(cfg);
     rl.close();
