@@ -75,7 +75,11 @@ function loadProxies() {
     .filter((s) => s && !s.startsWith('#'));
 }
 
-/** Minimal HTTP client — https via a plain CONNECT proxy, or direct for socks (fallback: try https anyway). */
+const proxyLib = require('./proxy.js');
+
+/** Minimal HTTP client — https through the shared proxy agent (river/src/proxy.js),
+ *  the layer the other rails (token8341, radox) already trust. The old hand-rolled
+ *  CONNECT path silently drained the event loop on Node ≥24 and killed the run. */
 function request(proxyLine, url, { method = 'GET', headers = {}, body = null, timeoutMs = 30000 } = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -85,36 +89,20 @@ function request(proxyLine, url, { method = 'GET', headers = {}, body = null, ti
       hs['Content-Type'] = hs['Content-Type'] || 'application/json';
       hs['Content-Length'] = payload.length;
     }
-    const done = (res) => {
-      let t = '';
-      res.setEncoding('utf8');
-      res.on('data', (c) => (t += c));
-      res.on('end', () => resolve({ status: res.statusCode || 0, text: t, setCookie: res.headers['set-cookie'] || [] }));
-    };
-    const direct = () => {
-      const r = https.request({ method, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs }, done);
-      r.setTimeout(timeoutMs, () => r.destroy(new Error('timeout')));
-      r.on('error', reject);
-      if (payload) r.write(payload);
-      r.end();
-    };
-    if (!proxyLine || /^socks/i.test(proxyLine)) return direct();
-    const p = new URL(proxyLine.startsWith('http') ? proxyLine : `http://${proxyLine}`);
-    const connect = require('http').request(
-      { method: 'CONNECT', host: p.hostname, port: p.port, path: `${u.hostname}:443`, headers: { host: `${u.hostname}:443` }, timeout: 10000 },
+    const px = proxyLine ? proxyLib.parseProxy(proxyLine) : null;
+    const r = https.request(
+      { method, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs, agent: px ? proxyLib.createAgent(px) : undefined },
       (res) => {
-        if (res.statusCode !== 200) return reject(new Error(`proxy CONNECT ${res.statusCode}`));
-        res.socket.once('error', reject);
-        const r = https.request({ method, socket: res.socket, servername: u.hostname, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs }, done);
-        r.setTimeout(timeoutMs, () => r.destroy(new Error('timeout')));
-        r.on('error', reject);
-        if (payload) r.write(payload);
-        r.end();
+        let t = '';
+        res.setEncoding('utf8');
+        res.on('data', (c) => (t += c));
+        res.on('end', () => resolve({ status: res.statusCode || 0, text: t, setCookie: res.headers['set-cookie'] || [] }));
       }
     );
-    connect.setTimeout(10000, () => connect.destroy(new Error('proxy CONNECT timeout')));
-    connect.on('error', reject);
-    connect.end();
+    r.setTimeout(timeoutMs, () => r.destroy(new Error('timeout')));
+    r.on('error', reject);
+    if (payload) r.write(payload);
+    r.end();
   });
 }
 
@@ -171,11 +159,25 @@ async function mintOne(proxy, index, accounts) {
   const tokenRes = await request(proxy, `${BASE}/api/token/`, {
     method: 'POST',
     headers: { cookie, ...(uid ? { 'new-api-user': String(uid) } : {}) },
-    body: { name: `enlyai-${index}` },
+    body: { name: `enlyai-${index}`, remain_quota: 0, expired_time: -1, unlimited_quota: true },
   });
   const tj = jparse(tokenRes.text);
-  let key = tj && tj.data && tj.data.key;
+  let key = (tj && tj.data && (tj.data.key || (tj.data.token && tj.data.token.key))) || null;
+  if (!key) {
+    // The create endpoint only answers {"success":true} on this deployment —
+    // list the newest token and reveal its key (same shape as token8341).
+    const auth = { cookie, ...(uid ? { 'new-api-user': String(uid) } : {}) };
+    const list = await request(proxy, `${BASE}/api/token/?p=0&size=20`, { headers: auth });
+    const items = ((jparse(list.text) || {}).data || {}).items || [];
+    if (items.length) {
+      const rev = await request(proxy, `${BASE}/api/token/${items[0].id}/key`, { method: 'POST', headers: auth });
+      console.log(`   reveal ${rev.status}: ${rev.text.replace(/\s+/g, ' ').slice(0, 120)}`);
+      const rj = jparse(rev.text) || {};
+      key = (rj.data && (rj.data.key || rj.key)) || (typeof rj === 'string' ? rj : null);
+    }
+  }
   if (!key) throw new Error(`token ${tokenRes.status}: ${tokenRes.text.slice(0, 120)}`);
+  console.log(`   key=${String(key).slice(0, 10)}… len=${String(key).length}`);
   if (!key.startsWith('sk-')) key = key; /* some forks return the raw 48-char key */
   const model = await pickVerificationModel(proxy, key);
   const chat = await request(proxy, `${BASE}/v1/chat/completions`, {
