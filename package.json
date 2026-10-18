@@ -1,0 +1,36 @@
+{
+  "name": "enlyai-bulk-apikey",
+  "version": "1.0.0",
+  "description": "Bulk-create EnlyAI accounts with auto-generated API keys — OpenAI-compatible inference + 9Router connector.",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "enlyai-bulk-apikey": "src/cli.js",
+    "enlyai-bulk-apikey-launcher": "src/launcher.js"
+  },
+  "main": "src/cli.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/launcher.js",
+    "mint": "node src/cli.js"
+  },
+  "keywords": [
+    "api-key",
+    "bulk",
+    "register",
+    "launcher",
+    "enlyai",
+    "apikey",
+    "9router",
+    "openai-compatible"
+  ],
+  "files": [
+    "src/cli.js",
+    "src/launcher.js",
+    "src/connect-9router.js",
+    "README.md",
+    "LICENSE"
+  ]
+}
