@@ -24,6 +24,12 @@
 
 </div>
 
+<div align="center">
+
+**English** · [Türkçe](README.tr.md) · [中文](README.cn.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md) · [Português](README.pt.md)
+
+</div>
+
 ---
 
 ## ✨ Why this exists
@@ -51,11 +57,9 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 `GET /v1/models` (with a key) serves 8 ids; the live-verified ones:
 
-| Model ID | note |
-| --- | --- |
-| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | reasoning model; 5/5 probe 200s, returns `reasoning_content`, real `logprobs`, working `tool_calls` |
-| `enlyai-work` | the provider's default work model |
-| `meta/muse-glimmer-30b` | intermittent under load — re-checked by `--verify-only` |
+|Model|✓|
+|---|---|
+|`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`|✓|
 
 **How much is free:** the welcome quota measured on a fresh account: `GET /api/user/self` answers `quota: 500000000000` right after sign-up (units are the panel's own quota scale). The grant is per account, so `--count N` multiplies it. `minimaxai/minimax-m3` was retired upstream (410 Gone) — the tool never lists it.
 
