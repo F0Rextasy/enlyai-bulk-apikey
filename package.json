@@ -6,6 +6,7 @@
   "type": "commonjs",
   "bin": {
     "enlyai-bulk-apikey": "src/cli.js",
+    "enlyai-bulk-apikey-9router": "src/connect-9router.js",
     "enlyai-bulk-apikey-launcher": "src/launcher.js"
   },
   "main": "src/cli.js",
