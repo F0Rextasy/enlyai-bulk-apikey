@@ -4,7 +4,7 @@
 /**
  * Connect EnlyAI to a 9Router instance.
  *
- * EnlyAI serves an OpenAI-compatible endpoint (https://inference.enlyai.global/v1), so a single
+ * EnlyAI serves an OpenAI-compatible endpoint (https://api.enlyai.com/v1), so a single
  * provider-node carries every key: this registers one `openai-compatible` node
  * with prefix `enlyai` and then one connection per API key, named
  * `enlyai-001`, `enlyai-002`, … Re-running it is idempotent (an existing node
@@ -13,7 +13,7 @@
  * Usage:
  *   node src/connect-9router.js \
  *     --base http://localhost:20128 --password 123456 \
- *     --api-key dahl_xxxx [--name "EnlyAI"] [--prefix enlyai]
+ *     --api-key <key> [--name "EnlyAI"] [--prefix enlyai]
  *
  *   node src/connect-9router.js                  # register every key in keys.txt
  *   node src/connect-9router.js --model <id>     # pin the connection's default model
@@ -24,7 +24,7 @@
  *   --api-key <key>    EnlyAI API key     (default: every key in keys.txt)
  *   --name <name>      provider-node name       (default EnlyAI)
  *   --prefix <slug>    provider prefix in 9Router (default enlyai)
- *   --base-url <url>   provider base URL        (default https://inference.enlyai.global/v1)
+ *   --base-url <url>   provider base URL        (default https://api.enlyai.com/v1)
  *   --model <id>       connection default model (default MiniMaxAI/MiniMax-M2.7)
  *
  * Zero dependencies. Node.js >= 18.
