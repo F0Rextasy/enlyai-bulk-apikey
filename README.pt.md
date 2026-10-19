@@ -20,7 +20,7 @@
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Início rápido](#-quick-start) · [🎁 Nível gratuito](#-free-tier--how-much-you-get) · [🤖 Modelos](#-models--all-8-of-them) · [🧪 Use a API](#-how-to-use-the-api) · [✅ Verificado](#-verified-working--every-key-is-tested) · [🧭 Como funciona](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Opções](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Problemas](#-issues)
+[🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-8-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
 
 </div>
 
@@ -30,25 +30,24 @@
 
 </div>
 
-
 ---
 
-## ✨ Por que isso existe
+## ✨ Por que isto existe
 
-A EnlyAI concede uma **cota de boas-vindas de 500.000.000.000 unidades por conta** e emite a primeira chave de API via REST simples — **sem e-mail, sem captcha, sem cartão, sem navegador**. Isso faz de uma conta por chave a unidade natural, e esta ferramenta transforma isso em um `keys.txt` onde cada linha sobreviveu a uma chamada de chat ao vivo.
+A EnlyAI concede uma **cota de boas-vindas de 500.000.000.000 unidades por conta** e gera a primeira chave de API via REST puro — **sem e-mail, sem captcha, sem cartão, sem navegador**. Isso faz de uma conta por chave a unidade natural, e esta ferramenta transforma isso em um `keys.txt` onde cada linha sobreviveu a uma chamada de chat ao vivo.
 
-## 🎁 Nível gratuito — quanto você recebe
+## 🎁 Plano gratuito — quanto você recebe
 
 **Toda nova conta recebe uma cota de boas-vindas de 500.000.000.000 unidades** — sem e-mail, sem captcha, sem cartão, sem navegador.
 
-| O quê | Valor |
+| O que | Valor |
 | --- | --- |
 | Cota de boas-vindas | **500.000.000.000 unidades** (`quota` em `GET /api/user/self` logo após o cadastro) |
 | Cartão exigido | **Não** |
-| Cadastro | REST simples — usuário + senha (o campo de e-mail é livre; nenhum código é enviado) |
-| A unidade que escala | **uma conta = uma chave** → `--count N` é na verdade "N contas gratuitas" |
+| Cadastro | REST puro — nome de usuário + senha (o campo de e-mail é livre; nenhum código é enviado) |
+| A unidade que escala | **uma conta = uma chave** → `--count N` na verdade significa "N contas gratuitas" |
 
-> 💡 O nível gratuito é definido pela EnlyAI e pode mudar. Confira os números ao vivo em [api.enlyai.com](https://api.enlyai.com) — e deixe o próprio gate da ferramenta decidir:
+> 💡 O plano gratuito é definido pela EnlyAI e pode mudar. Confira os números ao vivo em [api.enlyai.com](https://api.enlyai.com) — e deixe o próprio gate da ferramenta decidir:
 
 ```bash
 node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
@@ -61,8 +60,14 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 |Modelo|✓|
 |---|---|
 |`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`|✓|
+|`enlyai-work`|✓|
+|`google/diffusiongemma-26b-a4b-it`|✓|
+|`meta/llama-3.2-11b-vision-instruct`|✓|
+|`meta/muse-glimmer-30b`|✓|
+|`nvidia/nemotron-3-super-120b-a12b`|✓|
+|`nvidia/nemotron-3.5-lightning-30b-a3b`|✓|
 
-**Quanto é gratuito:** a cota de boas-vindas medida em uma conta nova: `GET /api/user/self` responde `quota: 500000000000` logo após o cadastro (as unidades são a própria escala de cota do painel). A concessão é por conta, então `--count N` a multiplica. `minimaxai/minimax-m3` foi descontinuado upstream (410 Gone) — a ferramenta nunca o lista.
+**Quanto é grátis:** a cota de boas-vindas medida em uma conta nova: `GET /api/user/self` responde `quota: 500000000000` logo após o cadastro (as unidades são a própria escala de cota do painel). A concessão é por conta, então `--count N` a multiplica. `minimaxai/minimax-m3` foi retirado upstream (410 Gone) — a ferramenta nunca o lista.
 
 ## 🧪 Como usar a API
 
@@ -92,11 +97,11 @@ node src/launcher.js        # interactive
 node src/cli.js --count 50
 ```
 
-`keys.txt` (espelhado em `%USERPROFILE%\enlyai-keys.txt`) é escrito **somente** após uma conclusão de chat ao vivo provar a chave.
+`keys.txt` (espelhado em `%USERPROFILE%\enlyai-keys.txt`) é gravado **somente** depois que uma conclusão de chat ao vivo comprova a chave.
 
 ### 🖱️ O launcher
 
-O launcher pede a lista de proxies, a contagem e o modelo de verificação, lembra-os em `launcher.config.json` e executa a CLI com as flags corretas.
+O launcher solicita a lista de proxies, a contagem e o modelo de verificação, lembra deles em `launcher.config.json` e executa a CLI com as flags corretas.
 
 ## ✅ Verificado funcionando — toda chave é testada
 
@@ -105,10 +110,10 @@ O launcher pede a lista de proxies, a contagem e o modelo de verificação, lemb
 | `POST /api/user/register` | **200** — sem e-mail, telefone, cartão ou captcha em nenhuma etapa |
 | cota de boas-vindas | `GET /api/user/self` → `quota: 500000000000` |
 | `POST /api/token/` | **200** com a chave na resposta |
-| `POST /v1/chat/completions` — executado para **toda** chave antes de ser escrita | **200** com conteúdo real (ex.: nemotron responde com `reasoning_content`) |
-| uma chave que falha na verificação de chat | nunca é escrita em `keys.txt` — a conta permanece recuperável em `accounts.json` |
+| `POST /v1/chat/completions` — executado para **toda** chave antes de ser gravada | **200** com conteúdo real (por exemplo, nemotron responde com `reasoning_content`) |
+| uma chave que falha na verificação de chat | nunca é gravada em `keys.txt` — a conta permanece recuperável em `accounts.json` |
 
-Re-verifique a qualquer momento:
+Verifique novamente a qualquer momento:
 
 ```bash
 node src/cli.js --verify-only
@@ -127,11 +132,11 @@ inbox (one address per account)                                  a fresh address
 
 | Etapa | Chamada | Notas |
 | --- | --- | --- |
-| status | `GET /api/status` | acessibilidade + gates (registrado: `em:false, ts:false`) |
-| cadastro | `POST /api/user/register {username,password,email}` | o e-mail é um campo de texto simples — nenhum código é enviado |
-| login | `POST /api/user/login` | cookie de sessão; guarde-o para as chamadas de token |
+| status | `GET /api/status` | alcançabilidade + gates (registrado: `em:false, ts:false`) |
+| cadastro | `POST /api/user/register {username,password,email}` | o e-mail é um campo de string simples — nenhum código é enviado |
+| login | `POST /api/user/login` | cookie de sessão; mantenha-o para as chamadas de token |
 | chave | `POST /api/token/ {name}` | chave retornada no corpo da resposta |
-| verificação | `POST /v1/chat/completions` | 200 ao vivo obrigatório antes de `keys.txt` |
+| verificação | `POST /v1/chat/completions` | 200 ao vivo exigido antes de `keys.txt` |
 
 ## ⚙️ Opções da CLI
 
@@ -148,20 +153,20 @@ node src/cli.js --help
 
 ## 🛰️ Atrás de um proxy
 
-Toda requisição sai através de uma linha de proxy do seu pool; uma linha morta falha naquela tentativa e a ferramenta segue em frente. `--screen` testa uma lista nova contra o host antes de uma execução.
+Cada requisição sai por uma linha de proxy do seu pool; uma linha morta faz essa tentativa falhar e a ferramenta segue em frente. `--screen` testa uma lista nova contra o host antes de uma execução.
 
 ## 📄 Arquivos
 
 | Caminho | Conteúdo |
 | --- | --- |
 | `keys.txt` | uma chave verificada ao vivo por linha — ignorado pelo git |
-| `accounts.json` | usuário / senha / uid / chave / status de chat por conta |
+| `accounts.json` | nome de usuário / senha / uid / chave / status de chat por conta |
 | `proxies.txt` | suas saídas, uma por linha — ignorado pelo git |
 | `outputs/` | estado da execução — ignorado pelo git |
 
 ## 🔌 Conectar ao 9Router
 
-O [9Router](https://9router.com) é um roteador auto-hospedado e compatível com OpenAI. Registre este provedor uma vez e toda chave se torna uma conexão sob um único nó de provedor:
+[9Router](https://9router.com) é um roteador auto-hospedado e compatível com OpenAI. Registre este provedor uma vez e cada chave se torna uma conexão sob um único provider-node:
 
 ```bash
 node src/connect-9router.js
@@ -175,9 +180,9 @@ Padrões: `--base http://localhost:20128`, `--password 123456`, `--name "EnlyAI"
 | --- | --- |
 | 🏢 Provedor | **EnlyAI** — [api.enlyai.com](https://api.enlyai.com) |
 | 🎁 O que o provedor oferece | uma conta por chave — sem e-mail, toda chave verificada por chat |
-| 🔑 O que uma chave oferece | uma chave de API vinculada à sua própria conta: os 8 ids de modelo no endpoint abaixo, nos limites do seu plano. A cota fica na **conta**, e é exatamente por isso que esta ferramenta cria uma conta por chave |
+| 🔑 O que uma chave oferece | uma chave de API limitada à sua própria conta: os 8 ids de modelo no endpoint abaixo, nos limites do seu plano. A cota fica na **conta**, que é exatamente por isso que esta ferramenta cria uma conta por chave |
 | 🌐 Formato da API | Compatível com OpenAI: `POST https://api.enlyai.com/v1/chat/completions` |
-| 🔒 Seus dados | apenas api.enlyai.com e o backend de inbox que você configurar são contatados; as chaves ficam na sua máquina |
+| 🔒 Seus dados | somente api.enlyai.com e o backend de caixa de entrada que você configurar são contatados; as chaves permanecem na sua máquina |
 
 ## 🐞 Problemas
 
@@ -185,18 +190,18 @@ Se a EnlyAI mudar o formato do cadastro ou a cota, a ferramenta para nessa etapa
 
 ## 📄 Licença
 
-MIT © 2026 — veja [LICENSE](LICENSE).
+MIT © 2026 — consulte [LICENSE](LICENSE).
 
 <div align="center">
 
-**[MIT](LICENSE)** © 2026 enlyai-bulk-apikey contributors
+**[MIT](LICENSE)** © 2026 colaboradores do enlyai-bulk-apikey
 
 </div>
 
 ## ⚡ Formato de execução (presets)
 
 `--preset=turbo|balanced|safe` define workers + a pausa entre contas (turbo = 5,
-balanced = 4, safe = 2); `--conc`/`--gap` explícitos (ou as próprias flags do repositório) sempre vencem,
-e sem `--preset` a ferramenta mantém exatamente seu formato histórico.
+balanced = 4, safe = 2); `--conc`/`--gap` explícitos (ou as flags do próprio repositório) sempre têm prioridade,
+e, sem `--preset`, a ferramenta mantém exatamente seu formato histórico.
 
-Turbo önerilir (5 worker); daha fazlası zayıf bilgisayarda yük/ban riski.
+Turbo é recomendado (5 workers); mais do que isso traz risco de carga/ban em computadores fracos.

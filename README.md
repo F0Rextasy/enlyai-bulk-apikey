@@ -60,6 +60,12 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 |Model|✓|
 |---|---|
 |`nvidia/nemotron-3-nano-omni-30b-a3b-reasoning`|✓|
+|`enlyai-work`|✓|
+|`google/diffusiongemma-26b-a4b-it`|✓|
+|`meta/llama-3.2-11b-vision-instruct`|✓|
+|`meta/muse-glimmer-30b`|✓|
+|`nvidia/nemotron-3-super-120b-a12b`|✓|
+|`nvidia/nemotron-3.5-lightning-30b-a3b`|✓|
 
 **How much is free:** the welcome quota measured on a fresh account: `GET /api/user/self` answers `quota: 500000000000` right after sign-up (units are the panel's own quota scale). The grant is per account, so `--count N` multiplies it. `minimaxai/minimax-m3` was retired upstream (410 Gone) — the tool never lists it.
 
