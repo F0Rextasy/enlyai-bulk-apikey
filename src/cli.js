@@ -11,8 +11,10 @@
  *   POST /api/token/ {name}                               → key (`sk-…` style)
  *   POST /v1/chat/completions  Bearer <key>               → live check (200 = kept)
  *
- * Every request leaves through a proxy line from PROXIES (default proxies.txt);
- * a dead exit fails that attempt and the tool moves to the next.
+ * Your proxy list is OPTIONAL (default `proxies.txt`, or $ENLYAI_PROXIES):
+ * every request goes through a line from it when one is provided — a dead exit
+ * fails that attempt and the tool moves to the next — and without a list the
+ * tool connects directly.
  *
  * Options:
  *   --count N          how many accounts/keys to mint (default 50)
@@ -62,7 +64,7 @@ if (has('help') || has('h')) {
   console.log('  node src/cli.js --verify-only  re-check keys.txt');
   console.log('  node src/cli.js --screen       test the proxy list against EnlyAI');
   console.log('  node src/cli.js --preset=turbo --count 50 run shape (turbo = 5 workers)');
-  console.log('\nEnv: ENLYAI_PROXIES (proxy list path, default proxies.txt)');
+  console.log('\nEnv: ENLYAI_PROXIES (proxy list path, default proxies.txt — optional: without a pool the tool connects directly)');
   process.exit(0);
 }
 
@@ -96,14 +98,21 @@ const PRESET_RUN = resolvePreset({
 function loadProxies() {
   const f = path.resolve(ROOT, PROXY_FILE);
   if (!fs.existsSync(f)) {
-    console.error(`! proxy list not found: ${PROXY_FILE} (one proxy per line: http://host:port or socks5://host:port)`);
-    process.exit(2);
+    // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
+    // bans) but the tool works without one. `null` is the direct sentinel.
+    console.log(`no proxy list at ${PROXY_FILE} — running WITHOUT a proxy (direct). Put exits there (or set ENLYAI_PROXIES) to route through them.`);
+    return [null];
   }
-  return fs
+  const lines = fs
     .readFileSync(f, 'utf8')
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter((s) => s && !s.startsWith('#'));
+  if (!lines.length) {
+    console.log(`proxy list ${PROXY_FILE} has no usable exits — running WITHOUT a proxy (direct).`);
+    return [null];
+  }
+  return lines;
 }
 
 const proxyLib = require('./proxy.js');
@@ -154,14 +163,15 @@ function appendKey(key) {
 async function screen(proxies) {
   let ok = 0;
   for (const px of proxies) {
+    const tag = px || 'direct';
     try {
       const r = await request(px, `${BASE}/api/status`, { timeoutMs: 12000 });
       const good = r.status === 200 && /system_name|success/.test(r.text);
-      console.log(`${good ? '✔' : '✖'} ${px} -> ${r.status}`);
+      console.log(`${good ? '✔' : '✖'} ${tag} -> ${r.status}`);
       if (good) ok++;
-      if (good) fs.appendFileSync(path.join(OUT_DIR, 'proxies-live.txt'), `${px}\n`);
+      if (good && px) fs.appendFileSync(path.join(OUT_DIR, 'proxies-live.txt'), `${px}\n`);
     } catch (e) {
-      console.log(`✖ ${px} -> ${String((e && e.message) || e).slice(0, 60)}`);
+      console.log(`✖ ${tag} -> ${String((e && e.message) || e).slice(0, 60)}`);
     }
   }
   console.log(`live ${ok}/${proxies.length}`);

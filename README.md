@@ -88,8 +88,8 @@ Set the base URL in any agent or SDK (Cursor, OpenCode, Kilo Code, …) and pick
 # clone or fork this repository, then:
 cd enlyai-bulk-apikey
 
-# 1) your proxy list, one per line (http://… or socks5://…)
-printf 'http://127.0.0.1:8080\n' > proxies.txt
+# 1) your proxy list, one per line (http://… or socks5://…) — optional
+printf 'http://127.0.0.1:8080\n' > proxies.txt   # optional — without it the tool runs direct
 
 # 2) go
 node src/launcher.js        # interactive
@@ -101,7 +101,7 @@ node src/cli.js --count 50
 
 ### 🖱️ The launcher
 
-The launcher asks for the proxy list, count and verification model, remembers them in `launcher.config.json`, and runs the CLI with the right flags.
+The launcher asks for the proxy list (optional — without one the CLI runs direct), count and verification model, remembers them in `launcher.config.json`, and runs the CLI with the right flags.
 
 ## ✅ Verified working — every key is tested
 
@@ -149,11 +149,15 @@ node src/cli.js --help
 
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
-| `ENLYAI_PROXIES` | `proxies.txt` | pool file, one proxy per line |
+| `ENLYAI_PROXIES` | `proxies.txt` | pool file, one proxy per line — optional: without a pool the CLI connects directly |
 
 ## 🛰️ Behind a proxy
 
-Every request leaves through a proxy line from your pool; a dead line fails that attempt and the tool moves on. `--screen` tests a fresh list against the host before a run.
+**Optional — recommended at scale (per-IP limits, bans).** The tool works without a proxy too.
+
+- **With a pool:** put one exit per line in `proxies.txt` (or set `ENLYAI_PROXIES`) — every request goes through a line from it, a dead line fails that attempt and the tool moves on.
+- **Without a pool:** the CLI prints `running WITHOUT a proxy (direct)` and connects directly; sign-up, key minting and the chat gate are unchanged — only where the packets leave from.
+- `--screen` works in either mode: it tests the exits you have (or the direct route) against the host before a run.
 
 ## 📄 Files
 
