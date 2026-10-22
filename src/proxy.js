@@ -33,6 +33,10 @@ const DEFAULT_TIMEOUT_MS = 35000;
 // full handshake budget starve the CPE for the whole fleet (measured: 651
 // sockets in SYN_SENT, mostly our own screens, while ICMP was clean).
 const DEFAULT_CONNECT_TIMEOUT_MS = 8000;
+// An exit that answers `HTTP/1.1 200 ` and then streams bytes without ever
+// ending the header must not be able to grow this process: the handshake
+// buffer is capped instead of only timer-bounded.
+const MAX_HANDSHAKE_BYTES = 16384;
 
 /** Accepted line shapes:
  *    host:port
@@ -199,13 +203,15 @@ function connectHttpProxy(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS })
   return new Promise((resolve, reject) => {
     const socket = net.connect({ host: proxy.host, port: proxy.port });
     let settled = false;
+    let timer = null;
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       socket.destroy();
       reject(err);
     };
-    const timer = setTimeout(() => fail(new Error(`proxy CONNECT timeout (${label(proxy)})`)), timeoutMs);
+    timer = setTimeout(() => fail(new Error(`proxy CONNECT timeout (${label(proxy)})`)), timeoutMs);
     socket.on('error', (e) => {
       clearTimeout(timer);
       fail(new Error(`proxy connect failed (${label(proxy)}): ${e.message}`));
@@ -215,8 +221,12 @@ function connectHttpProxy(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS })
     let buffer = Buffer.alloc(0);
     const onData = (chunk) => {
       buffer = Buffer.concat([buffer, chunk]);
+      if (buffer.length > MAX_HANDSHAKE_BYTES) return fail(new Error(`proxy CONNECT header too large (${label(proxy)})`));
       const end = buffer.indexOf('\r\n\r\n');
       if (end === -1) return;
+      // Pause before the hand-over: an unshift() on a flowing socket emits the
+      // leftover to the listeners being detached right here and drops it.
+      socket.pause();
       socket.removeListener('data', onData);
       clearTimeout(timer);
       const head = buffer.slice(0, end).toString('latin1');
@@ -257,13 +267,15 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
   return new Promise((resolve, reject) => {
     const socket = net.connect({ host: proxy.host, port: proxy.port });
     let settled = false;
+    let timer = null;
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       socket.destroy();
       reject(err);
     };
-    const timer = setTimeout(() => fail(new Error(`SOCKS5 timeout (${label(proxy)})`)), timeoutMs);
+    timer = setTimeout(() => fail(new Error(`SOCKS5 timeout (${label(proxy)})`)), timeoutMs);
     socket.on('error', (e) => fail(new Error(`SOCKS5 connect failed (${label(proxy)}): ${e.message}`)));
     socket.setNoDelay(true);
 
@@ -300,6 +312,9 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
       if (buffer.length < 4) return;
       const rep = buffer[1];
       const atyp = buffer[3];
+      // Byte 4 is the domain length: without it `need` is NaN, the length test
+      // is skipped and the half header is handed over as tunnel data.
+      if (atyp !== 0x01 && atyp !== 0x04 && buffer.length < 5) return;
       const need = atyp === 0x01 ? 10 : atyp === 0x04 ? 22 : 7 + buffer[4];
       if (buffer.length < need) return;
       if (rep !== 0x00) {
@@ -310,6 +325,8 @@ function connectSocks5(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
       const rest = buffer.slice(need);
       if (settled) return;
       settled = true;
+      socket.pause();
+      socket.removeListener('data', onData);
       if (rest.length) socket.unshift(rest);
       resolve(socket);
     };
@@ -338,18 +355,20 @@ function connectSocks4(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
   return new Promise((resolve, reject) => {
     const socket = net.connect({ host: proxy.host, port: proxy.port });
     let settled = false;
+    let timer = null;
     const fail = (err) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       socket.destroy();
       reject(err);
     };
-    const timer = setTimeout(() => fail(new Error(`SOCKS4 timeout (${label(proxy)})`)), timeoutMs);
+    timer = setTimeout(() => fail(new Error(`SOCKS4 timeout (${label(proxy)})`)), timeoutMs);
     socket.on('error', (e) => fail(new Error(`SOCKS4 connect failed (${label(proxy)}): ${e.message}`)));
     socket.setNoDelay(true);
 
     let buffer = Buffer.alloc(0);
-    socket.on('data', (chunk) => {
+    const onData = (chunk) => {
       buffer = Buffer.concat([buffer, chunk]);
       if (buffer.length < 8) return;
       clearTimeout(timer);
@@ -357,10 +376,12 @@ function connectSocks4(proxy, { host, port, timeoutMs = DEFAULT_TIMEOUT_MS }) {
       const rest = buffer.slice(8);
       if (settled) return;
       settled = true;
+      socket.pause();
+      socket.removeListener('data', onData);
       if (rest.length) socket.unshift(rest);
       resolve(socket);
-    });
-
+    };
+    socket.on('data', onData);
     socket.on('connect', () => {
       const user = Buffer.from(proxy.username || '');
       // SOCKS4a: invalid IP 0.0.0.1 + hostname after the user id.

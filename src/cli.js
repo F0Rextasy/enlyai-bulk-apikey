@@ -32,6 +32,7 @@
  */
 
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 const https = require('https');
 const { URL } = require('url');
@@ -67,16 +68,7 @@ if (has('help') || has('h')) {
   console.log('\nEnv: ENLYAI_PROXIES (proxy list path, default proxies.txt — optional: without a pool the tool connects directly)');
   process.exit(0);
 }
-
-const COUNT = parseInt(arg('count', '50'), 10);
-const MODEL = arg('model', '');
-const VERIFY_ONLY = has('verify-only');
-const SCREEN_ONLY = has('screen');
-const PROXY_FILE = process.env.ENLYAI_PROXIES || arg('proxies', 'proxies.txt');
-
-// Presets (operator standard v3): --preset picks workers + inter-account gap,
-// explicit --conc/--gap win over it, and without --preset the rail keeps
-// today's shape exactly (one account at a time, 800 ms pad).
+/** `--n=5`, or the `--n 5` form `arg()` already reads. */
 const flagVal = (n) => {
   const eq = argv.find((a) => a.startsWith(`--${n}=`));
   if (eq) return eq.split('=').slice(1).join('=');
@@ -86,6 +78,25 @@ const numOrNull = (v) => {
   const n = v === null || v === undefined || v === true ? NaN : parseInt(v, 10);
   return Number.isFinite(n) ? n : null;
 };
+/** A bare flag, junk or nothing keeps the default; a real value wins. */
+const numArg = (n, dflt) => {
+  const v = numOrNull(flagVal(n));
+  return v === null ? dflt : v;
+};
+const MODEL = flagVal('model') || '';
+const VERIFY_ONLY = has('verify-only');
+const SCREEN_ONLY = has('screen');
+const PROXY_FILE = process.env.ENLYAI_PROXIES || flagVal('proxies') || 'proxies.txt';
+const COUNT = numArg('count', 50);
+// A run that asks for nothing is a usage error, not a success line.
+if (COUNT < 1 && !SCREEN_ONLY && !VERIFY_ONLY) {
+  console.error(`[fatal] --count must be at least 1 (got ${COUNT})`);
+  process.exit(1);
+}
+
+// Presets (operator standard v3): --preset picks workers + inter-account gap,
+// explicit --conc/--gap win over it, and without --preset the rail keeps
+// today's shape exactly (one account at a time, 800 ms pad).
 const PRESET_RUN = resolvePreset({
   preset: presetArgv() || arg('preset', null),
   conc: numOrNull(flagVal('conc')),
@@ -95,6 +106,11 @@ const PRESET_RUN = resolvePreset({
 });
 
 // ---------------------------------------------------------------- proxy (CONNECT over http/https)
+
+/** The pool file, or `[null]` when there is no pool at all (the documented
+ *  direct mode). A file that is there and has candidate lines but no line
+ *  `parseProxy()` accepts is an error: turning that into "no proxy" would put
+ *  the whole run on this machine's own address, which the contract forbids. */
 function loadProxies() {
   const f = path.resolve(ROOT, PROXY_FILE);
   if (!fs.existsSync(f)) {
@@ -107,12 +123,17 @@ function loadProxies() {
     .readFileSync(f, 'utf8')
     .split(/\r?\n/)
     .map((s) => s.trim())
-    .filter((s) => s && !s.startsWith('#'));
+    .filter((s) => s && !s.startsWith('#') && !s.startsWith('//'));
   if (!lines.length) {
     console.log(`proxy list ${PROXY_FILE} has no usable exits — running WITHOUT a proxy (direct).`);
     return [null];
   }
-  return lines;
+  const usable = lines.filter((s) => proxyLib.parseProxy(s));
+  if (!usable.length) {
+    throw new Error(`proxy list ${PROXY_FILE} has ${lines.length} candidate line(s) but no usable exit — a line must be host:port, host:port:user:pass, user:pass@host:port, scheme://[user:pass@]host:port or host|port|user|pass. Fix the file, or remove it to run direct.`);
+  }
+  if (usable.length !== lines.length) console.log(`proxy list ${PROXY_FILE}: ${lines.length - usable.length} unusable line(s) skipped`);
+  return usable;
 }
 
 const proxyLib = require('./proxy.js');
@@ -130,8 +151,10 @@ function request(proxyLine, url, { method = 'GET', headers = {}, body = null, ti
       hs['Content-Length'] = payload.length;
     }
     const px = proxyLine ? proxyLib.parseProxy(proxyLine) : null;
+    // Fail closed: a line that does not parse must never become "no proxy".
+    if (proxyLine && !px) return reject(new Error(`unusable proxy line "${proxyLine}" — refusing to fall back to a direct connection`));
     const r = https.request(
-      { method, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs, agent: px ? proxyLib.createAgent(px) : undefined },
+      { method, host: u.hostname, port: u.port || 443, path: u.pathname + u.search, headers: hs, agent: px ? proxyLib.createAgent(px) : undefined },
       (res) => {
         let t = '';
         res.setEncoding('utf8');
@@ -147,20 +170,43 @@ function request(proxyLine, url, { method = 'GET', headers = {}, body = null, ti
 }
 
 const jparse = (s) => { try { return JSON.parse(s); } catch { return null; } };
-const randName = () => 'enlyai' + Math.random().toString(36).slice(2, 8);
-const randPass = () => 'En' + Math.random().toString(36).slice(2, 10) + '!7';
+// Account credentials are secrets: Math.random is the one PRNG you must not
+// use for them. Same shape as before (`enlyai` + 6 chars / `En` + 8 chars + `!7`).
+const rand36 = (n) => Array.from({ length: n }, () => crypto.randomInt(36).toString(36)).join('');
+const randName = () => 'enlyai' + rand36(6);
+const randPass = () => 'En' + rand36(8) + '!7';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 0o600 is POSIX-only — Windows ignores it — but keys.txt is the file that
+// ends up in a 9Router, so it gets the mode where the mode means something.
 function appendKey(key) {
   fs.mkdirSync(ROOT, { recursive: true });
-  fs.appendFileSync(KEYS_FILE, `${key}\n`);
+  fs.appendFileSync(KEYS_FILE, `${key}\n`, { mode: 0o600 });
   try {
-    fs.appendFileSync(path.join(process.env.USERPROFILE || process.env.HOME || ROOT, 'enlyai-keys.txt'), `${key}\n`);
+    fs.appendFileSync(path.join(process.env.USERPROFILE || process.env.HOME || ROOT, 'enlyai-keys.txt'), `${key}\n`, { mode: 0o600 });
   } catch (e) { /* home mirror is best-effort */ }
+}
+
+/** The ledger is the only copy of each account's password and key: write it
+ *  beside itself and rename, so a kill cannot truncate it. */
+function saveAccounts(accounts) {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.writeFileSync(`${ACCOUNTS_FILE}.tmp`, JSON.stringify(accounts, null, 2), { mode: 0o600 });
+  fs.renameSync(`${ACCOUNTS_FILE}.tmp`, ACCOUNTS_FILE);
+}
+
+/** `accounts.json` that exists but does not parse is an error, never "no
+ *  accounts yet": the next write would drop every record it holds. */
+function loadAccounts() {
+  if (!fs.existsSync(ACCOUNTS_FILE)) return [];
+  const parsed = jparse(fs.readFileSync(ACCOUNTS_FILE, 'utf8'));
+  if (!Array.isArray(parsed)) throw new Error(`${path.basename(ACCOUNTS_FILE)} is not valid JSON — move it aside if you want a fresh file; every account's password and key lives here`);
+  return parsed;
 }
 
 // ---------------------------------------------------------------- flows
 async function screen(proxies) {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
   let ok = 0;
   for (const px of proxies) {
     const tag = px || 'direct';
@@ -219,20 +265,27 @@ async function mintOne(proxy, index, accounts) {
   }
   if (!key) throw new Error(`token ${tokenRes.status}: ${tokenRes.text.slice(0, 120)}`);
   console.log(`   key=${String(key).slice(0, 10)}… len=${String(key).length}`);
-  if (!key.startsWith('sk-')) key = key; /* some forks return the raw 48-char key */
-  const model = await pickVerificationModel(proxy, key);
-  const chat = await request(proxy, `${BASE}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${key}` },
-    body: { model, messages: [{ role: 'user', content: 'Reply OK' }], max_tokens: 8 },
-    timeoutMs: 60000,
-  });
-  const ok = chat.status === 200 && /"content"\s*:/.test(chat.text);
-  const rec = { index, username, password, uid, key, model, chat: { status: chat.status, ok }, at: new Date().toISOString() };
+  // The key is returned once: record the account (password included) before the
+  // gate, so a dead exit during verification cannot lose the account and key.
+  const rec = { index, username, password, uid, key, model: null, chat: null, at: new Date().toISOString() };
   accounts.push(rec);
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
-  console.log(`${ok ? '✔' : '✖'} #${index} ${username} key ${key.slice(0, 10)}… chat ${chat.status}`);
+  saveAccounts(accounts);
+  let ok = false;
+  try {
+    rec.model = await pickVerificationModel(proxy, key);
+    const chat = await request(proxy, `${BASE}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}` },
+      body: { model: rec.model, messages: [{ role: 'user', content: 'Reply OK' }], max_tokens: 8 },
+      timeoutMs: 60000,
+    });
+    ok = chat.status === 200 && /"content"\s*:/.test(chat.text);
+    rec.chat = { status: chat.status, ok };
+  } catch (e) {
+    rec.chat = { status: 0, ok: false, error: String((e && e.message) || e).slice(0, 140) };
+  }
+  saveAccounts(accounts);
+  console.log(`${ok ? '✔' : '✖'} #${index} ${username} key ${key.slice(0, 10)}… chat ${rec.chat.status}`);
   if (ok) {
     appendKey(key);
     console.log('   written to keys.txt');
@@ -242,7 +295,7 @@ async function mintOne(proxy, index, accounts) {
 
 async function mint() {
   const proxies = loadProxies();
-  const accounts = fs.existsSync(ACCOUNTS_FILE) ? jparse(fs.readFileSync(ACCOUNTS_FILE, 'utf8')) || [] : [];
+  const accounts = loadAccounts();
   const conc = Math.max(1, PRESET_RUN.conc);
   const gapMs = Math.max(0, PRESET_RUN.gap) * 1000;
   console.log(`ENLYAI-MINT start · count=${COUNT} conc=${conc} gap=${gapMs / 1000}s${PRESET_RUN.name ? ` preset=${PRESET_RUN.name}` : ''}`);
@@ -269,7 +322,8 @@ async function mint() {
   }
   await Promise.all(Array.from({ length: Math.min(conc, Math.max(1, COUNT)) }, () => worker()));
   console.log(`done: ${made} key(s) this run, ${accounts.length} account(s) total`);
-  console.log(`ENLYAI-MINT ${made}/${COUNT} OK`);
+  console.log(`ENLYAI-MINT ${made}/${COUNT} ${made >= COUNT ? 'OK' : '— short of the target'}`);
+  if (made < COUNT) process.exitCode = 1;
 }
 
 async function verifyOnly() {
@@ -295,6 +349,7 @@ async function verifyOnly() {
     await sleep(600);
   }
   console.log(`verified ${ok}/${keys.length}`);
+  if (keys.length && !ok) process.exitCode = 1; // nothing confirmed is not a success
 }
 
 (async () => {
