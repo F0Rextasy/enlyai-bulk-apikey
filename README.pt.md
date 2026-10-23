@@ -1,6 +1,7 @@
 <div align="center">
 
 ```
+
 ███████╗███╗   ██╗██╗  ██╗   ██╗ █████╗ ██╗
 ██╔════╝████╗  ██║██║  ╚██╗ ██╔╝██╔══██╗██║
 █████╗  ██╔██╗ ██║██║   ╚████╔╝ ███████║██║
@@ -21,7 +22,7 @@
 [![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-8-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
+[🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-8-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [🔌 OmniRoute](#-connect-to-omniroute) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
 
 </div>
 
@@ -186,6 +187,7 @@ node src/connect-omniroute.js
 ```
 
 Padrões: `--base http://localhost:20128`, `--password 123456`, `--name "EnlyAI"`, `--prefix enlyai`, `--base-url https://api.enlyai.com/v1`. Os modelos são então servidos como `enlyai/<model id>` e balanceados entre todas as chaves.
+
 ## 🔑 O que uma chave oferece
 
 | | |

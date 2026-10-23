@@ -1,6 +1,7 @@
 <div align="center">
 
 ```
+
 ███████╗███╗   ██╗██╗  ██╗   ██╗ █████╗ ██╗
 ██╔════╝████╗  ██║██║  ╚██╗ ██╔╝██╔══██╗██║
 █████╗  ██╔██╗ ██║██║   ╚████╔╝ ███████║██║
@@ -21,7 +22,7 @@
 [![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Hızlı başlangıç](#-quick-start) · [🎁 Ücretsiz katman](#-free-tier--how-much-you-get) · [🤖 Modeller](#-models--all-8-of-them) · [🧪 API'yi kullanın](#-how-to-use-the-api) · [✅ Doğrulandı](#-verified-working--every-key-is-tested) · [🧭 Nasıl çalışır](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Seçenekler](#️-cli-options) · [🛰️ Proxy'ler](#️-behind-a-proxy) · [🐞 Sorunlar](#-issues)
+[🛠 Hızlı başlangıç](#-quick-start) · [🎁 Ücretsiz katman](#-free-tier--how-much-you-get) · [🤖 Modeller](#-models--all-8-of-them) · [🧪 API'yi kullanın](#-how-to-use-the-api) · [✅ Doğrulandı](#-verified-working--every-key-is-tested) · [🧭 Nasıl çalışır](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [🔌 OmniRoute](#-connect-to-omniroute) · [⚙️ Seçenekler](#️-cli-options) · [🛰️ Proxy'ler](#️-behind-a-proxy) · [🐞 Sorunlar](#-issues)
 
 </div>
 
@@ -186,6 +187,7 @@ node src/connect-omniroute.js
 ```
 
 Varsayılanlar: `--base http://localhost:20128`, `--password 123456`, `--name "EnlyAI"`, `--prefix enlyai`, `--base-url https://api.enlyai.com/v1`. Modeller ardından `enlyai/<model id>` olarak sunulur ve tüm anahtarlar arasında yük dengelenir.
+
 ## 🔑 Bir anahtar size ne kazandırır
 
 | | |

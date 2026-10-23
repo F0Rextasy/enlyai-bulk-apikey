@@ -1,6 +1,7 @@
 <div align="center">
 
 ```
+
 ███████╗███╗   ██╗██╗  ██╗   ██╗ █████╗ ██╗
 ██╔════╝████╗  ██║██║  ╚██╗ ██╔╝██╔══██╗██║
 █████╗  ██╔██╗ ██║██║   ╚████╔╝ ███████║██║
@@ -21,7 +22,7 @@
 [![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 빠른 시작](#-quick-start) · [🎁 무료 티어](#-free-tier--how-much-you-get) · [🤖 모델](#-models--all-8-of-them) · [🧪 API 사용](#-how-to-use-the-api) · [✅ 검증됨](#-verified-working--every-key-is-tested) · [🧭 작동 방식](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ 옵션](#️-cli-options) · [🛰️ 프록시](#️-behind-a-proxy) · [🐞 이슈](#-issues)
+[🛠 빠른 시작](#-quick-start) · [🎁 무료 티어](#-free-tier--how-much-you-get) · [🤖 모델](#-models--all-8-of-them) · [🧪 API 사용](#-how-to-use-the-api) · [✅ 검증됨](#-verified-working--every-key-is-tested) · [🧭 작동 방식](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [🔌 OmniRoute](#-connect-to-omniroute) · [⚙️ 옵션](#️-cli-options) · [🛰️ 프록시](#️-behind-a-proxy) · [🐞 이슈](#-issues)
 
 </div>
 
@@ -186,6 +187,7 @@ node src/connect-omniroute.js
 ```
 
 기본값: `--base http://localhost:20128`, `--password 123456`, `--name "EnlyAI"`, `--prefix enlyai`, `--base-url https://api.enlyai.com/v1`. 그러면 모델은 `enlyai/<model id>`로 제공되고 모든 키에 걸쳐 로드 밸런싱됩니다.
+
 ## 🔑 키 하나로 얻는 것
 
 | | |
