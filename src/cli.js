@@ -132,9 +132,9 @@ function loadProxies() {
   return lines;
 }
 
-const proxyLib = require('../../river-bulk-apikey/src/proxy');
+const proxyLib = require('./proxy');
 
-/** Minimal HTTP client — https through the shared proxy agent (river/src/proxy.js),
+/** Minimal HTTP client — https through the shared proxy agent (the repo's own src/proxy.js),
  *  the layer the other rails (token8341, radox) already trust. The old hand-rolled
  *  CONNECT path silently drained the event loop on Node ≥24 and killed the run. */
 function request(proxyLine, url, { method = 'GET', headers = {}, body = null, timeoutMs = 30000 } = {}) {
