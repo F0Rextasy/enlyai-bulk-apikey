@@ -18,6 +18,7 @@
  *
  * Options:
  *   --count N          how many accounts/keys to mint (default 50)
+ *   --auto           headless-friendly alias (launcher passes it; no prompts ever)   
  *   --verify-only      re-check every key in keys.txt with a live chat call
  *   --screen           only test the proxy list against the host
  *   --model <id>       model used for the live verification (default the first
@@ -87,6 +88,7 @@ if (has('help') || has('h')) {
 
 const COUNT = parseInt(arg('count', '50'), 10);
 const MODEL = arg('model', '');
+const AUTO = has('auto');
 const VERIFY_ONLY = has('verify-only');
 const SCREEN_ONLY = has('screen');
 const PROXY_FILE = process.env.ENLYAI_PROXIES || arg('proxies', 'proxies.txt');
